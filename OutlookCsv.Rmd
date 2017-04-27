@@ -26,7 +26,7 @@ library(dplyr)
 library(lubridate)
 
 filefullpath <- "D:/Temp/MeetingTest.csv"
-if (!file.exists(filefullpath) )
+if (file.exists(filefullpath) )
 {
 meetingraw <-  read.csv(filefullpath)
 }
@@ -34,10 +34,15 @@ meetingraw <-  read.csv(filefullpath)
 meeting <- select(meetingraw, Subject, Start.Date, Start.Time, End.Date, End.Time, Location,
         Show.time.as, All.day.event, Private ) 
 
+## showtime as 1 = tenative, 2 = busy, 3 = free, 4 = out of office
 ## use libridate function to create data class variable yyyy-mm-dd hh:mm:ss with 24 hour clock
 meeting$StartDateTime <- mdy_hms(paste(meeting$Start.Date, meeting$Start.Time, sep = ":" ) )
 meeting$EndDateTime   <- mdy_hms(paste(meeting$End.Date, meeting$End.Time, sep = ":" ) )
                                  
+meetingx <-       select(meeting, Subject, StartDateTime , EndDateTime , Location, Show.time.as , All.day.event,                                     Private)   %>% 
+          mutate( meetingtime = difftime(EndDateTime, StartDateTime, units = "mins" ) ) 
+
+##  meetingy <-     mutate(meetingx, meetingtime = difftime(EndDateTime, StartDateTime, units = "mins" ) ) 
 
 ```
 
