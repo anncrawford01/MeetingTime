@@ -1,0 +1,56 @@
+---
+title: "Time Spent in Meetings,  Mining Outlook Calendar"
+author: "Ann Crawford"
+date: "April 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## A Simple,Free Tool for Time Management
+
+**How much time to you spend in meetings?** Transparent data analysis of outlook calendar inspired by Tableau video <http://inn0vate.blogspot.com/2012/09/setting-up-csv-file-for-outlook.html>.
+
+Open outlook, Click file>  Open and Export. Select Export to a file > next > Select Comma separated Values > next > Select Calendar > save file.
+
+##Data Processing
+```{r readandprocessdata}
+##install.packages("ggplot2")
+##install.packages("dplyr")
+##install.packages("lubridate")
+
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+filefullpath <- "D:/Temp/MeetingTest.csv"
+if (!file.exists(filefullpath) )
+{
+meetingraw <-  read.csv(filefullpath)
+}
+
+meeting <- select(meetingraw, Subject, Start.Date, Start.Time, End.Date, End.Time, Location,
+        Show.time.as, All.day.event, Private ) 
+
+## use libridate function to create data class variable yyyy-mm-dd hh:mm:ss with 24 hour clock
+meeting$StartDateTime <- mdy_hms(paste(meeting$Start.Date, meeting$Start.Time, sep = ":" ) )
+meeting$EndDateTime   <- mdy_hms(paste(meeting$End.Date, meeting$End.Time, sep = ":" ) )
+                                 
+
+```
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
