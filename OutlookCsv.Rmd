@@ -1,5 +1,5 @@
 ---
-title: "Time Spent in Meetings,  Mining Outlook Calendar"
+title: "Time Spent in Meetings, Mining Outlook Calendar"
 author: "Ann Crawford"
 date: "April 27, 2017"
 output: html_document
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Open outlook, Click file>  Open and Export. Select Export to a file > next > Select Comma separated Values > next > Select Calendar > save file.
 
-##Data Processing
+##Data Read and Clean Up
 ```{r readandprocessdata}
 ##install.packages("ggplot2")
 ##install.packages("dplyr")
@@ -25,29 +25,42 @@ library(ggplot2)
 library(dplyr)
 library(lubridate)
 
+showtime <- function(i)
+{
+        ## showtime as 1 = tenative, 2 = busy, 3 = free, 4 = out of office
+        result <-       ifelse(i == 1, "tenative", 
+                        ifelse(i == 2, "busy" ,
+                        ifelse(i == 3, "free",
+                        ifelse(i == 4, "out of office"
+                               ,"other") ) ) )
+        return(result)
+}
+
+
 filefullpath <- "D:/Temp/MeetingTest.csv"
 if (file.exists(filefullpath) )
 {
 meetingraw <-  read.csv(filefullpath)
 }
 
-meeting <- select(meetingraw, Subject, Start.Date, Start.Time, End.Date, End.Time, Location,
-        Show.time.as, All.day.event, Private ) 
 
-## showtime as 1 = tenative, 2 = busy, 3 = free, 4 = out of office
 ## use libridate function to create data class variable yyyy-mm-dd hh:mm:ss with 24 hour clock
-meeting$StartDateTime <- mdy_hms(paste(meeting$Start.Date, meeting$Start.Time, sep = ":" ) )
-meeting$EndDateTime   <- mdy_hms(paste(meeting$End.Date, meeting$End.Time, sep = ":" ) )
-                                 
-meetingx <-       select(meeting, Subject, StartDateTime , EndDateTime , Location, Show.time.as , All.day.event,                                     Private)   %>% 
-          mutate( meetingtime = difftime(EndDateTime, StartDateTime, units = "mins" ) ) 
+meetingraw$StartDateTime <- mdy_hms(paste(meetingraw$Start.Date, meetingraw$Start.Time, sep = ":" ) )
+meetingraw$EndDateTime   <- mdy_hms(paste(meetingraw$End.Date, meetingraw$End.Time, sep = ":" ) )
+ 
+## Get meetings that were actually accepted 
+meeting <-   filter(meetingraw, Show.time.as == 2) %>%
+select( Subject, StartDateTime , EndDateTime , Location, Show.time.as , All.day.event,                                     Private)   %>% 
+        mutate( nbrofminutes = difftime(EndDateTime, StartDateTime, units = "mins")  , weekday = weekdays.Date(StartDateTime)  , month = months.Date(StartDateTime)  ) 
+                       
 
-##  meetingy <-     mutate(meetingx, meetingtime = difftime(EndDateTime, StartDateTime, units = "mins" ) ) 
+firstday <- date(min(meeting$StartDateTime))
+lastday  <- date(max(meeting$StartDateTime))
 
 ```
-
+**From `r firstday` to `r lastday` you have spent `r sum(meeting$nbrofminutes)/60` hours in meetings.**
 ```{r cars}
-summary(cars)
+##summary(cars)
 ```
 
 ## Including Plots
@@ -55,7 +68,7 @@ summary(cars)
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+##plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
