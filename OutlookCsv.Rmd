@@ -1,5 +1,5 @@
 ---
-title: "Time Spent in Meetings, Mining Outlook Calendar"
+title: "Time Spent in Meetings, A Data Literate Presentation Example"
 author: "Ann Crawford"
 date: "April 27, 2017"
 output: html_document
@@ -8,23 +8,47 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-##Transparent Data Analysis ##
+##Data Literacy##
+
+Derriving meaningful information from data requires 5 key components:
+* The Question
+* Data Source
+* Transparency
+* Reproducibility
+* Accessibility
+
+This short example uses R scripting to demonstrate these components.
+
+There are many data analysis tools.  Excel is common.  Tableau, whose published video <http://inn0vate.blogspot.com/2012/09/setting-up-csv-file-for-outlook.html> inspired this analysis, is another. 
+
+Neither of these will have the economy of scale or the basic economy of price as using an open source scripting language such as R. More importantly scripted data analysis using open source tools supports Transparency, Reproducibility, and Accessibility.
+
+
+###The Question ###
 
 **How much time do you spend in meetings?**
 
-There are many tools that can answer this question.  Excel is likely the most common.  Tableau, whose published video <http://inn0vate.blogspot.com/2012/09/setting-up-csv-file-for-outlook.html> inspired this analysis, is another. 
-
-Neither of these will have the economy of scale or the basic economy of price as using an open source scripting language such as R. More importantly data analysis should include 5 basic components:
-
-1. The question
-
-2. The data source
+**The question must have a quantitative component.** In this example the measure is vague. Does time mean minutes, hours, years? How many meetings are we examining, a year's worth, a life time?  If the question is vague, it is incumbent upon the analysis to remove the ambiguties.
 
 
-This solution
-Open outlook, Click file>  Open and Export. Select Export to a file > next > Select Comma separated Values > next > Select Calendar > save file.
+### Data Source ###
 
-##Data Read and Clean Up
+Data may come from one or multiple data sources.  The data analysis must include the raw data and the methods used to read and process. Analysis that does not include the raw data and the methods used for clean up, cannot be reproduced. 
+
+The data in this example, will come from MS Outlook because meetings are scheduled using this tool. The data are exported into a csv using these steps.  These steps are may also be viewed it the video tableau link referenced above. Do not filter columns. 
+
+
+1. Select the Microsoft Outlook calendar.
+2. Go to File -> Import and Export.
+3. Click Export to a file.
+4. Choose Comma Separated Values (DOS) for Microsoft Excel or Microsoft Access.
+5. Select the Microsoft Outlook calendar.
+6. Type a name for the new file.
+
+### Transparency ###
+
+knitr documents integrate text and code into a single document making the entire process avaialable.  It allows, but does not require, users to understand every step taken from the raw data to the poslished graphics. 
+##Data 
 ```{r readandprocessdata}
 ##install.packages("ggplot2")
 ##install.packages("dplyr")
@@ -46,13 +70,15 @@ showtime <- function(i)
         return(result)
 }
 
+##filefullpath <- "D:/Temp/MeetingTest.csv"
+##file_names <- dir() #where you have your files
+##your_data_frame <- do.call(rbind,lapply(file_names,read.csv))
 
-filefullpath <- "D:/Temp/MeetingTest.csv"
+filefullpath <- "./Data/MeetingTest.csv"
 if (file.exists(filefullpath) )
 {
 meetingraw <-  read.csv(filefullpath)
 }
-
 
 ## use libridate function to create data class variable yyyy-mm-dd hh:mm:ss with 24 hour clock
 meetingraw$StartDateTime <- mdy_hms(paste(meetingraw$Start.Date, meetingraw$Start.Time, sep = ":" ) )
@@ -60,17 +86,20 @@ meetingraw$EndDateTime   <- mdy_hms(paste(meetingraw$End.Date, meetingraw$End.Ti
  
 ## Get meetings that were actually accepted 
 meeting <-   filter(meetingraw, Show.time.as == 2) %>%
-select( Subject, StartDateTime , EndDateTime , Location, Show.time.as , All.day.event,                                     Private)   %>% 
-        mutate( nbrofminutes = difftime(EndDateTime, StartDateTime, units = "mins")  , weekday = weekdays.Date(StartDateTime)  , month = months.Date(StartDateTime) )
+select( Subject, StartDateTime , EndDateTime , Location, Show.time.as , All.day.event, Private)   %>% 
+        arrange(StartDateTime) %>%
+        mutate( nbrofminutes = as.numeric(difftime(EndDateTime, StartDateTime, units = "mins") ) , weekday = weekdays.Date(StartDateTime)  , month = months.Date(StartDateTime) )
+
+##meeting$month = factor(meeting$month, levels = month.abb)
 
 graphmeeting <-
         group_by(meeting, month )   %>%
                 summarise(totaltime = sum(nbrofminutes))
-        
-                      
 
 firstday <- date(min(meeting$StartDateTime))
 lastday  <- date(max(meeting$StartDateTime))
+
+
 
 ```
 **From `r firstday` to `r lastday`** you have spent **`r sum(meeting$nbrofminutes)/60` hours** in meetings.**
@@ -78,7 +107,7 @@ lastday  <- date(max(meeting$StartDateTime))
 ##summary(cars)
 ```
 
-## Including Plots
+## Meeting Graphs
 ```{r pressure, echo=FALSE}
 ##plot(pressure)
 
