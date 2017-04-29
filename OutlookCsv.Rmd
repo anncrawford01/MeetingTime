@@ -8,10 +8,20 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## A Simple,Free Tool for Time Management
+##Transparent Data Analysis ##
 
-**How much time to you spend in meetings?** Transparent data analysis of outlook calendar inspired by Tableau video <http://inn0vate.blogspot.com/2012/09/setting-up-csv-file-for-outlook.html>.
+**How much time do you spend in meetings?**
 
+There are many tools that can answer this question.  Excel is likely the most common.  Tableau, whose published video <http://inn0vate.blogspot.com/2012/09/setting-up-csv-file-for-outlook.html> inspired this analysis, is another. 
+
+Neither of these will have the economy of scale or the basic economy of price as using an open source scripting language such as R. More importantly data analysis should include 5 basic components:
+
+1. The question
+
+2. The data source
+
+
+This solution
 Open outlook, Click file>  Open and Export. Select Export to a file > next > Select Comma separated Values > next > Select Calendar > save file.
 
 ##Data Read and Clean Up
@@ -51,24 +61,33 @@ meetingraw$EndDateTime   <- mdy_hms(paste(meetingraw$End.Date, meetingraw$End.Ti
 ## Get meetings that were actually accepted 
 meeting <-   filter(meetingraw, Show.time.as == 2) %>%
 select( Subject, StartDateTime , EndDateTime , Location, Show.time.as , All.day.event,                                     Private)   %>% 
-        mutate( nbrofminutes = difftime(EndDateTime, StartDateTime, units = "mins")  , weekday = weekdays.Date(StartDateTime)  , month = months.Date(StartDateTime)  ) 
-                       
+        mutate( nbrofminutes = difftime(EndDateTime, StartDateTime, units = "mins")  , weekday = weekdays.Date(StartDateTime)  , month = months.Date(StartDateTime) )
+
+graphmeeting <-
+        group_by(meeting, month )   %>%
+                summarise(totaltime = sum(nbrofminutes))
+        
+                      
 
 firstday <- date(min(meeting$StartDateTime))
 lastday  <- date(max(meeting$StartDateTime))
 
 ```
-**From `r firstday` to `r lastday` you have spent `r sum(meeting$nbrofminutes)/60` hours in meetings.**
+**From `r firstday` to `r lastday`** you have spent **`r sum(meeting$nbrofminutes)/60` hours** in meetings.**
 ```{r cars}
 ##summary(cars)
 ```
 
 ## Including Plots
-
-You can also embed plots, for example:
-
 ```{r pressure, echo=FALSE}
 ##plot(pressure)
+
+y<-ggplot(graphmeeting, aes(x=month, y=totaltime))+
+  geom_bar(stat='identity', position="dodge")+
+  labs(x="Month", y="Minutes")+
+    ggtitle("Minutes Spent in Meetings") +
+  theme(axis.text.x=element_text(angle=45, hjust=1))
+print(y)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
